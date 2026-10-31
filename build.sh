@@ -3,11 +3,26 @@ set -eu
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 APP="$ROOT/build/MenuShelf.app"
+BIN="$APP/Contents/MacOS/MenuShelf"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$ROOT/Info.plist" "$APP/Contents/Info.plist"
-swiftc -O -framework AppKit -framework ApplicationServices \
-  "$ROOT/MenuShelf.swift" "$ROOT/MenuBarIconService.swift" \
-  -o "$APP/Contents/MacOS/MenuShelf"
+
+if [ "${1:-}" = "--universal" ]; then
+  # Build each architecture separately and join them with lipo so releases
+  # run natively on both Apple Silicon and Intel Macs.
+  for arch in arm64 x86_64; do
+    swiftc -O -framework AppKit -framework ApplicationServices \
+      -target "${arch}-apple-macos13.0" \
+      "$ROOT/MenuShelf.swift" "$ROOT/MenuBarIconService.swift" \
+      -o "$BIN.$arch"
+  done
+  lipo -create "$BIN.arm64" "$BIN.x86_64" -output "$BIN"
+  rm -f "$BIN.arm64" "$BIN.x86_64"
+else
+  swiftc -O -framework AppKit -framework ApplicationServices \
+    "$ROOT/MenuShelf.swift" "$ROOT/MenuBarIconService.swift" \
+    -o "$BIN"
+fi
 
 # Build the multi-resolution .icns from Resources/AppIcon.png (1024x1024).
 ICONSET="$ROOT/build/AppIcon.iconset"
@@ -22,6 +37,7 @@ for spec in 16:icon_16x16 32:icon_16x16@2x 32:icon_32x32 64:icon_32x32@2x \
 done
 iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 rm -rf "$ICONSET"
+
 # Ad-hoc signing produces a new signature on every build; macOS may then ask
 # for Accessibility permission to be granted again.
 codesign --force --sign - "$APP"

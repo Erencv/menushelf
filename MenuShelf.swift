@@ -652,7 +652,10 @@ final class MenuShelfViewController: NSViewController {
     }
 
     private func updatePermissionLayout(isGranted: Bool) {
-        guard let root = viewIfLoaded else { return }
+        // NSViewController.viewIfLoaded is annotated macOS 14+ in the SDK;
+        // isViewLoaded has the same no-load semantics since 10.10.
+        guard isViewLoaded else { return }
+        let root = view
         let permissionRequired = !isGranted
         let height: CGFloat = permissionRequired ? 260 : 590
         root.setFrameSize(NSSize(width: 400, height: height))
