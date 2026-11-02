@@ -19,6 +19,20 @@
 - Xcode Command Line Tools (`xcode-select --install`) for the Swift compiler
 - Accessibility permission, which MenuShelf will prompt for on launch
 
+## Install
+
+With Homebrew:
+
+```sh
+brew install --cask Erencv/tap/menushelf
+```
+
+Or download `MenuShelf-macOS-universal.zip` from the [latest release](https://github.com/Erencv/menushelf/releases/latest) and drag the app to Applications. The binary is ad-hoc signed, so Gatekeeper blocks manually downloaded copies on recent macOS; clear the quarantine flag once after extracting:
+
+```sh
+xattr -dr com.apple.quarantine MenuShelf.app
+```
+
 ## Build and run
 
 ```sh
